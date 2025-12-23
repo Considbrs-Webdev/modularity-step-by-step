@@ -1,0 +1,123 @@
+.modularity-mod-step-by-step {
+    // Add your module styles here
+    .c-step-by-step-timeline {
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        padding-left: 2rem; // Space for line and markers
+
+        .c-step-by-step {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        // Vertical timeline line - spans only between first and last markers
+        // Positioned to match dot center exactly
+        .c-step-by-step-timeline__line {
+            position: absolute;
+            // Dot center calculation:
+            // Container padding: 2rem, section border: 1px, dot offset: -2rem, dot center: +6px
+            // Result: 2rem - 2rem + 1px + 6px = 7px from container left
+            // Line is 2px wide, so center it: 7px - 1px = 6px
+            left: 8px;
+            width: 2px;
+            background-color: #000;
+            z-index: 0;
+            
+            // Top and height set by JavaScript
+            top: 0;
+            height: 0;
+        }
+
+        .c-step-by-step-timeline__content {
+            position: relative;
+            flex: 1;
+            z-index: 1;
+        }
+
+        // Timeline markers as :before pseudo-elements on accordion sections
+        .c-step-by-step-timeline__section {
+            position: relative;
+            border: 1px solid #D0D0D0;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            cursor: pointer;
+
+            // Hover effect on entire section
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.02);
+                border-color: rgba(0, 0, 0, 0.3);
+            }
+
+            // Accordion content with pure CSS height animation using CSS Grid
+            .c-accordion__content {
+                display: grid;
+                grid-template-rows: 0fr;
+                transition: grid-template-rows 0.3s ease;
+                padding: 0;
+                transition: grid-template-rows 0.3s ease, padding 0.3s ease;
+                
+                > * {
+                    overflow: hidden;
+                }
+                
+                // When expanded, animate to full height and add padding
+                &[aria-hidden="false"] {
+                    grid-template-rows: 1fr;
+                    padding: 1rem; // Or whatever padding you want
+                }
+            }
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: -2rem; // Position to align with line
+                top: 0.75rem; // Align with button top (adjust as needed)
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: #fff; // Hollow by default (white fill)
+                border: 2px solid #000; // Black border
+                z-index: 2;
+                transition: background-color 0.2s ease;
+            }
+
+                   // Open state - make marker filled (black)
+                   &.c-step-by-step-timeline__section--open::before,
+                   // Fallback for browsers that support :has()
+                   &:has(.c-accordion__button[aria-expanded="true"])::before {
+                       background-color: #000; // Filled black
+                       border-color: #000; // Ensure border is black
+                   }
+
+                   // Closed state - make marker hollow (white fill, black border)
+                   // Default state is already hollow, but ensure it's explicit
+                   &:not(.c-step-by-step-timeline__section--open)::before,
+                   &:not(:has(.c-accordion__button[aria-expanded="true"]))::before {
+                       background-color: #fff; // White fill (hollow)
+                       border-color: #000; // Black border
+                   }
+
+            // Icon visibility based on section state
+            .c-accordion__icon--add {
+                display: block;
+            }
+
+            .c-accordion__icon--remove {
+                display: none;
+            }
+
+            // When section is open, show remove icon and hide add icon
+            &.c-step-by-step-timeline__section--open {
+                .c-accordion__icon--add {
+                    display: none;
+                }
+
+                .c-accordion__icon--remove {
+                    display: block;
+                }
+            }
+        }
+    }
+}
+
