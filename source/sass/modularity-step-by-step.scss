@@ -16,10 +16,6 @@
         // Positioned to match dot center exactly
         .c-step-by-step-timeline__line {
             position: absolute;
-            // Dot center calculation:
-            // Container padding: 2rem, section border: 1px, dot offset: -2rem, dot center: +6px
-            // Result: 2rem - 2rem + 1px + 6px = 7px from container left
-            // Line is 2px wide, so center it: 7px - 1px = 6px
             left: 8px;
             width: 2px;
             background-color: #000;
@@ -53,18 +49,18 @@
             .c-accordion__content {
                 display: grid;
                 grid-template-rows: 0fr;
-                transition: grid-template-rows 0.3s ease;
+                transition: grid-template-rows 0.3s ease, padding 0.0s ease 0.1s;
                 padding: 0;
-                transition: grid-template-rows 0.3s ease, padding 0.3s ease;
                 
                 > * {
                     overflow: hidden;
                 }
                 
-                // When expanded, animate to full height and add padding
+                // When expanded, animate to full height and add padding immediately (no transition)
                 &[aria-hidden="false"] {
                     grid-template-rows: 1fr;
                     padding: 1rem; // Or whatever padding you want
+                    transition: grid-template-rows 0.3s ease, padding 0s;
                 }
             }
 
