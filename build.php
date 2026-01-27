@@ -15,11 +15,10 @@ if (file_exists('composer.json')) {
 //Run npm if package.json is found
 if (file_exists('package.json') && file_exists('package-lock.json')) {
     if (is_array($argv) && !in_array('--install-npm', $argv)) {
-        //$buildCommands[] = 'npm ci --no-progress --no-audit';
-        $buildCommands[] = "npm install --no-progress --no-audit";
+        $buildCommands[] = 'npm ci --no-progress --no-audit';
+        //$buildCommands[] = "npm install --no-progress --no-audit";
         $buildCommands[] = 'npm run build';
     } else {
-        $npmPackage = json_decode(file_get_contents('package.json'));
         $buildCommands[] = "npm install --no-progress --no-audit";
         $buildCommands[] = "npm run build";
     }
