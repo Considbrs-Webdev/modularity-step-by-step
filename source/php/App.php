@@ -70,12 +70,12 @@ class App
         // ACF blocks store data in $_POST['acf-block_{block-id}']
         // Regular post type modules store data in $_POST['acf']
         // We need to check both locations
-        
+
         $steps = null;
         $repeaterKey = 'field_step-by-step_steps';
         $open_by_default_key = 'field_6949387375053';
         $blockKey = null;
-        
+
         // First, check for ACF block data (keys starting with 'acf-block_')
         foreach ($_POST as $key => $value) {
             if (strpos($key, 'acf-block_') === 0 && is_array($value)) {
@@ -87,7 +87,7 @@ class App
                 }
             }
         }
-        
+
         // If not found in blocks, check regular ACF post data
         if (!$steps && isset($_POST['acf']) && is_array($_POST['acf'])) {
             if (isset($_POST['acf'][$repeaterKey]) && is_array($_POST['acf'][$repeaterKey])) {
@@ -101,21 +101,21 @@ class App
         if (!$steps || !is_array($steps)) {
             return;
         }
-        
+
         // Count how many steps have open_by_default set to true
         // Block repeater rows are keyed as 'row-0', 'row-1', etc.
         $open_count = 0;
-        
+
         foreach ($steps as $row_index => $row_data) {
             if (!is_array($row_data)) {
                 continue;
             }
-            
+
             // Check if this row has open_by_default set to true
             // For true_false fields, value can be '1', 1, or true
             if (isset($row_data[$open_by_default_key])) {
                 $value = $row_data[$open_by_default_key];
-                
+
                 if ($value == '1' || $value === 1 || $value === true || $value === 'true') {
                     $open_count++;
                 }
@@ -125,7 +125,7 @@ class App
         // If more than one step has open_by_default = true, show error
         if ($open_count > 1) {
             $error = __('Only one step can be set to "Open by Default". Please uncheck the other step first.', 'modularity-step-by-step');
-            
+
             // For blocks, try attaching error to the block field or use general error
             if ($blockKey) {
                 // Try attaching to the block field itself

@@ -64,8 +64,9 @@ class StepByStep extends \Modularity\Module
             }
         }
 
-        // Accordion component configuration
-        $data['id'] = 'mod-step-by-step-' . $this->ID;
+        // Accordion component configuration – unique ID per instance
+        // Modularity: $this->ID is the post ID. Gutenberg: use Modularity/Block/Data filter for block id.
+        $data['id'] = 'mod-step-by-step-' . ($this->ID ?: wp_unique_id('mod-'));
         $data['componentElement'] = 'div';
         $data['sectionElement'] = 'div';
         $data['sectionHeadingElement'] = 'button';
@@ -78,7 +79,7 @@ class StepByStep extends \Modularity\Module
         
         // Add timeline-specific classes
         $data['class'] = 'c-accordion c-accordion--timeline c-step-by-step';
-        $data['attribute'] = 'data-module-id="' . esc_attr($this->ID) . '"';
+        $data['attribute'] = 'data-module-id="' . esc_attr($data['id']) . '"';
         
         // Add helper data
         $data['total_steps'] = count($data['list']);
