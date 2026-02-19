@@ -1,27 +1,40 @@
 .modularity-mod-step-by-step {
-  // Add your module styles here
+  // Overridable variables - override from another plugin if needed
+  --step-by-step-padding-left: 2rem;
+  --step-by-step-line-left: 8px;
+  --step-by-step-line-width: 2px;
+  --step-by-step-line-color: #000;
+  --step-by-step-marker-size: 12px;
+  --step-by-step-marker-top: 0.75rem;
+  --step-by-step-marker-hollow: #fff;
+  --step-by-step-marker-filled: #000;
+  --step-by-step-border-color: #d0d0d0;
+  --step-by-step-hover-amount: 0.1;
+  --step-by-step-hover-color: rgba(0, 0, 0, var(--step-by-step-hover-amount));
+  --step-by-step-content-padding: 1rem;
+  --step-by-step-gap: 16px;
+  --step-by-step-icon-size: 24px;
+
   .c-step-by-step-timeline {
     position: relative;
     display: flex;
     flex-direction: row;
-    padding-left: 2rem; // Space for line and markers
+    padding-left: var(--step-by-step-padding-left);
 
     .c-step-by-step {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: var(--step-by-step-gap);
     }
 
     // Vertical timeline line - spans only between first and last markers
-    // Positioned to match dot center exactly
     .c-step-by-step-timeline__line {
       position: absolute;
-      left: 8px;
-      width: 2px;
-      background-color: #000;
+      left: var(--step-by-step-line-left);
+      width: var(--step-by-step-line-width);
+      background-color: var(--step-by-step-line-color);
       z-index: 0;
 
-      // Top and height set by JavaScript
       top: 0;
       height: 0;
     }
@@ -48,16 +61,27 @@
     // Timeline markers as :before pseudo-elements on accordion sections
     .c-step-by-step-timeline__section {
       position: relative;
-      border: 1px solid #d0d0d0;
-      transition:
-        background-color 0.2s ease,
-        border-color 0.2s ease;
+      border: 1px solid var(--step-by-step-border-color);
       cursor: pointer;
 
-      // Hover effect on entire section
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-        border-color: rgba(0, 0, 0, 0.3);
+      // Hover overlay - always present, fades in on hover (same as quick-links)
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: var(--step-by-step-hover-color);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-duration-medium, 0.3s) ease;
+      }
+
+      &:hover::after {
+        opacity: 1;
+      }
+
+      // Override styleguide c-accordion__button hover - section ::after overlay handles it
+      .c-accordion__button:hover {
+        background-color: transparent;
       }
 
       // Accordion content with pure CSS height animation using CSS Grid
@@ -65,7 +89,7 @@
         display: grid;
         grid-template-rows: 0fr;
         transition:
-          grid-template-rows 0.3s ease,
+          grid-template-rows var(--transition-duration-medium, 0.3s) ease,
           padding 0s ease 0.1s;
         padding: 0;
 
@@ -73,12 +97,11 @@
           overflow: hidden;
         }
 
-        // When expanded, animate to full height and add padding immediately (no transition)
         &[aria-hidden="false"] {
           grid-template-rows: 1fr;
-          padding: 1rem; // Or whatever padding you want
+          padding: var(--step-by-step-content-padding);
           transition:
-            grid-template-rows 0.3s ease,
+            grid-template-rows var(--transition-duration-medium, 0.3s) ease,
             padding 0s;
         }
       }
@@ -86,50 +109,77 @@
       &::before {
         content: "";
         position: absolute;
-        left: -2rem; // Position to align with line
-        top: 0.75rem; // Align with button top (adjust as needed)
-        width: 12px;
-        height: 12px;
+        left: calc(-1 * var(--step-by-step-padding-left));
+        top: var(--step-by-step-marker-top);
+        width: var(--step-by-step-marker-size);
+        height: var(--step-by-step-marker-size);
         border-radius: 50%;
-        background-color: #fff; // Hollow by default (white fill)
-        border: 2px solid #000; // Black border
+        background-color: var(--step-by-step-marker-hollow);
+        border: 2px solid var(--step-by-step-line-color);
         z-index: 2;
-        transition: background-color 0.2s ease;
+        transition: background-color var(--transition-duration-medium, 0.3s)
+          ease;
       }
 
-      // Open state - make marker filled (black)
+      // Open state - make marker filled
       &.c-step-by-step-timeline__section--open::before,
-                   // Fallback for browsers that support :has()
-                   &:has(.c-accordion__button[aria-expanded="true"])::before {
-        background-color: #000; // Filled black
-        border-color: #000; // Ensure border is black
+      &:has(.c-accordion__button[aria-expanded="true"])::before {
+        background-color: var(--step-by-step-marker-filled);
+        border-color: var(--step-by-step-marker-filled);
       }
 
-      // Closed state - make marker hollow (white fill, black border)
-      // Default state is already hollow, but ensure it's explicit
+      // Closed state - make marker hollow
       &:not(.c-step-by-step-timeline__section--open)::before,
       &:not(:has(.c-accordion__button[aria-expanded="true"]))::before {
-        background-color: #fff; // White fill (hollow)
-        border-color: #000; // Black border
+        background-color: var(--step-by-step-marker-hollow);
+        border-color: var(--step-by-step-line-color);
       }
 
-      // Icon visibility based on section state
+      // Icon spin animation - same as styleguide accordion & menu (rotate 180deg, ease .3s)
+      .c-accordion__button-wrapper {
+        position: relative;
+      }
+
+      .c-accordion__icon--add,
+      .c-accordion__icon--remove {
+        transition:
+          ease 0.3s transform,
+          ease 0.3s opacity;
+      }
+
       .c-accordion__icon--add {
-        display: block;
+        opacity: 1;
+        transform: rotate(0deg);
+        width: var(--step-by-step-icon-size);
+        height: var(--step-by-step-icon-size);
+        font-size: var(--step-by-step-icon-size);
       }
 
       .c-accordion__icon--remove {
-        display: none;
+        opacity: 0;
+        transform: translateY(-50%) rotate(-180deg);
+        position: absolute;
+        right: calc(
+          var(--base, 8px) * 2
+        ); // Match button-wrapper padding so it overlays the add icon
+        top: 50%;
+        width: var(--step-by-step-icon-size);
+        height: var(--step-by-step-icon-size);
+        font-size: var(--step-by-step-icon-size);
+        &::before {
+          transform: rotate(0deg);
+        }
       }
 
-      // When section is open, show remove icon and hide add icon
       &.c-step-by-step-timeline__section--open {
         .c-accordion__icon--add {
-          display: none;
+          opacity: 0;
+          transform: rotate(180deg);
         }
 
         .c-accordion__icon--remove {
-          display: block;
+          opacity: 1;
+          transform: translateY(-50%) rotate(0deg);
         }
       }
     }
