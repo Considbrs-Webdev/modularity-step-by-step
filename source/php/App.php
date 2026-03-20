@@ -22,6 +22,9 @@ class App
         // Enqueue styles
         add_action('wp_enqueue_scripts', [$this, 'enqueueStyles']);
 
+        // Block / Gutenberg editor — match frontend module appearance
+        add_action('enqueue_block_editor_assets', [$this, 'addEditorStyles']);
+
         // Validate that only one step can be set to "open_by_default"
         add_action('acf/validate_save_post', [$this, 'validateOpenByDefault']);
     }
@@ -32,6 +35,23 @@ class App
      * @return void
      */
     public function enqueueStyles(): void
+    {
+        $styleFile = CacheBust::name('css/modularity-step-by-step.css');
+
+        if ($styleFile) {
+            wp_enqueue_style(
+                'modularity-step-by-step',
+                MODULARITYSTEPBYSTEP_URL . '/assets/dist/' . $styleFile,
+                [],
+                null
+            );
+        }
+    }
+
+    /**
+     * Enqueue the same built CSS in the block editor as on the frontend.
+     */
+    public function addEditorStyles(): void
     {
         $styleFile = CacheBust::name('css/modularity-step-by-step.css');
 
