@@ -1,230 +1,108 @@
 /**
- * Modularity Step By Step - Frontend JavaScript
- *
- * Custom accordion logic with pure CSS animations and timeline updates
+ * Keeps one step open and redraws the timeline rail between marker centers.
  */
-
 (function () {
   "use strict";
 
-  /**
-   * Close a section (helper function)
-   * Scoped to container so multiple step-by-step modules on page don't conflict.
-   */
-  function closeSection(section: HTMLElement, container: HTMLElement) {
-    const button = section.querySelector(".c-accordion__button") as HTMLElement;
-    if (!button) return;
-
-    const contentId = button.getAttribute("aria-controls");
-    const contentElement = contentId
-      ? ((container.querySelector(
-          `#${CSS.escape(contentId)}`,
-        ) as HTMLElement) ?? document.getElementById(contentId))
-      : null;
-
-    // Update button state
-    button.setAttribute("aria-expanded", "false");
-    button.classList.remove("c-accordion__button--expanded");
-
-    // Update section state
-    section.classList.remove("c-step-by-step-timeline__section--open");
-
-    // Update content visibility
-    if (contentElement) {
-      contentElement.setAttribute("aria-hidden", "true");
-    }
-  }
-
-  /**
-   * Toggle accordion section open/closed
-   * Only one section can be open at a time
-   */
-  function toggleSection(button: HTMLElement) {
-    const section = button.closest(
-      ".c-step-by-step-timeline__section",
-    ) as HTMLElement | null;
-    if (!section) return;
-
-    const container = section.closest(
-      ".c-step-by-step-timeline",
-    ) as HTMLElement | null;
+  function closeSiblings(section: HTMLDetailsElement) {
+    const container = section.closest(".c-step-by-step-timeline");
     if (!container) return;
 
-    const isExpanded = button.getAttribute("aria-expanded") === "true";
-    const isOpening = !isExpanded;
-
-    // Close all other sections in this timeline (scoped to this container only)
-    const allSections = container.querySelectorAll(
-      ".c-step-by-step-timeline__section",
-    );
-    allSections.forEach((otherSection) => {
-      if (otherSection !== section) {
-        closeSection(otherSection as HTMLElement, container as HTMLElement);
-      }
-    });
-
-    // Toggle the clicked section
-    if (isOpening) {
-      // Opening: update button state
-      button.setAttribute("aria-expanded", "true");
-      button.classList.add("c-accordion__button--expanded");
-
-      // Update section state
-      section.classList.add("c-step-by-step-timeline__section--open");
-
-      // Update content visibility (scope to container for multiple modules on page)
-      const contentId = button.getAttribute("aria-controls");
-      if (contentId) {
-        const contentElement =
-          (container.querySelector(
-            `#${CSS.escape(contentId)}`,
-          ) as HTMLElement) ?? document.getElementById(contentId);
-        if (contentElement) {
-          contentElement.setAttribute("aria-hidden", "false");
+    container
+      .querySelectorAll<HTMLDetailsElement>(
+        "details.c-step-by-step-timeline__section[open]"
+      )
+      .forEach((other) => {
+        if (other !== section) {
+          other.open = false;
         }
-      }
-    } else {
-      // Closing: use helper function
-      closeSection(section, container);
-    }
-
-    // Update timeline line after state changes
-    updateTimelineLine(container as HTMLElement);
+      });
   }
 
-  /**
-   * Update timeline section state (for dot appearance)
-   */
-  function updateTimelineSection(section: HTMLElement, isExpanded: boolean) {
-    if (isExpanded) {
-      section.classList.add("c-step-by-step-timeline__section--open");
-    } else {
-      section.classList.remove("c-step-by-step-timeline__section--open");
-    }
+  function markerCenter(section: HTMLElement, containerTop: number): number {
+    const summary = section.querySelector("summary");
+    const rect = (summary ?? section).getBoundingClientRect();
+    return rect.top - containerTop + rect.height / 2;
   }
 
-  /**
-   * Update timeline line: draw a line between the top and bottom dots
-   *
-   */
   function updateTimelineLine(container: HTMLElement) {
     const line = container.querySelector(
-      ".c-step-by-step-timeline__line",
-    ) as HTMLElement;
-    const sections = container.querySelectorAll(
-      ".c-step-by-step-timeline__section",
+      ".c-step-by-step-timeline__line"
+    ) as HTMLElement | null;
+    const sections = container.querySelectorAll<HTMLElement>(
+      ".c-step-by-step-timeline__section"
     );
 
     if (!line || sections.length === 0) return;
 
-    // Single step: hide dots and line via CSS (::before pseudo-elements can't be selected in JS)
     container.classList.toggle(
       "c-step-by-step-timeline--single",
-      sections.length === 1,
+      sections.length === 1
     );
 
     if (sections.length === 1) return;
 
-    const firstSection = sections[0] as HTMLElement;
-    const lastSection = sections[sections.length - 1] as HTMLElement;
+    const containerTop = container.getBoundingClientRect().top;
+    const firstCenter = markerCenter(sections[0], containerTop);
+    const lastCenter = markerCenter(sections[sections.length - 1], containerTop);
 
-    // Get section positions relative to container
-    const containerRect = container.getBoundingClientRect();
-    const firstSectionRect = firstSection.getBoundingClientRect();
-    const lastSectionRect = lastSection.getBoundingClientRect();
-
-    // Calculate dot top positions: section top + dot offset (0.75rem) + dot center (6px)
-    const containerStyle = window.getComputedStyle(container);
-    const fontSize = parseFloat(containerStyle.fontSize) || 16;
-    const dotTopOffset = 0.75 * fontSize + 6; // 0.75rem + 6px (half of 12px dot)
-    const firstDotCenter =
-      firstSectionRect.top - containerRect.top + dotTopOffset;
-    const lastDotCenter =
-      lastSectionRect.top - containerRect.top + dotTopOffset;
-
-    // Set line top and height (left is handled by CSS)
-    line.style.top = `${firstDotCenter}px`;
-    line.style.height = `${lastDotCenter - firstDotCenter}px`;
+    line.style.top = `${firstCenter}px`;
+    line.style.height = `${Math.max(0, lastCenter - firstCenter)}px`;
   }
 
-  /**
-   * Initialize timeline accordion
-   */
-  function initTimelineAccordion() {
-    const containers = document.querySelectorAll(".c-step-by-step-timeline");
+  function onToggle(event: Event) {
+    const section = event.currentTarget as HTMLDetailsElement;
+    if (section.open) {
+      closeSiblings(section);
+    }
 
-    containers.forEach((container) => {
+    const container = section.closest(".c-step-by-step-timeline");
+    if (container) {
+      updateTimelineLine(container as HTMLElement);
+    }
+  }
+
+  function initTimeline() {
+    document.querySelectorAll(".c-step-by-step-timeline").forEach((container) => {
       const containerEl = container as HTMLElement;
-
-      // Initial line update
       updateTimelineLine(containerEl);
 
-      // Set up click handlers for buttons
-      const buttons = container.querySelectorAll(
-        ".c-accordion__button",
-      ) as NodeListOf<HTMLElement>;
+      const sections = container.querySelectorAll<HTMLDetailsElement>(
+        "details.c-step-by-step-timeline__section"
+      );
 
-      buttons.forEach((button) => {
-        // Set initial state based on aria-expanded
-        const isInitiallyExpanded =
-          button.getAttribute("aria-expanded") === "true";
-        const section = button.closest(
-          ".c-step-by-step-timeline__section",
-        ) as HTMLElement;
-        if (section) {
-          updateTimelineSection(section, isInitiallyExpanded);
-        }
-
-        // Add click handler
-        button.addEventListener("click", (e) => {
-          e.preventDefault();
-          toggleSection(button);
-        });
+      sections.forEach((section) => {
+        section.addEventListener("toggle", onToggle);
       });
 
-      // Observe content wrapper for timeline line updates during animations
       const contentWrapper = container.querySelector(
-        ".c-step-by-step-timeline__content",
-      ) as HTMLElement;
+        ".c-step-by-step-timeline__content"
+      );
+      if (!contentWrapper) return;
 
-      if (contentWrapper) {
-        const resizeObserver = new ResizeObserver(() => {
-          updateTimelineLine(containerEl);
-        });
-        resizeObserver.observe(contentWrapper);
-
-        // Also observe all sections for position changes
-        const sections = container.querySelectorAll(
-          ".c-step-by-step-timeline__section",
-        );
-        sections.forEach((section) => {
-          resizeObserver.observe(section as HTMLElement);
-        });
-      }
+      const resizeObserver = new ResizeObserver(() => {
+        updateTimelineLine(containerEl);
+      });
+      resizeObserver.observe(contentWrapper);
+      sections.forEach((section) => resizeObserver.observe(section));
     });
   }
 
-  /**
-   * Initialize on DOM ready
-   */
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initTimelineAccordion);
+    document.addEventListener("DOMContentLoaded", initTimeline);
   } else {
-    initTimelineAccordion();
+    initTimeline();
   }
 
-  // Also listen for dynamically loaded content (if ACF is available)
   if (typeof (window as any).acf !== "undefined") {
-    (window as any).acf.addAction("render", initTimelineAccordion);
+    (window as any).acf.addAction("render", initTimeline);
   }
 
-  // Recalculate line on window resize
   let resizeTimeout: ReturnType<typeof setTimeout>;
   window.addEventListener("resize", function () {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(function () {
-      const containers = document.querySelectorAll(".c-step-by-step-timeline");
-      containers.forEach((container) => {
+      document.querySelectorAll(".c-step-by-step-timeline").forEach((container) => {
         updateTimelineLine(container as HTMLElement);
       });
     }, 250);

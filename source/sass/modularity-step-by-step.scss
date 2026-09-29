@@ -1,187 +1,133 @@
 .modularity-mod-step-by-step {
-  // Overridable variables - override from another plugin if needed
-  --step-by-step-padding-left: 2rem;
-  --step-by-step-line-left: 8px;
-  --step-by-step-line-width: 2px;
-  --step-by-step-line-color: #000;
-  --step-by-step-marker-size: 12px;
-  --step-by-step-marker-top: 0.75rem;
-  --step-by-step-marker-hollow: #fff;
-  --step-by-step-marker-filled: #000;
-  --step-by-step-border-color: #d0d0d0;
-  --step-by-step-hover-amount: 0.1;
-  --step-by-step-hover-color: rgba(0, 0, 0, var(--step-by-step-hover-amount));
-  --step-by-step-content-padding: 1rem;
-  --step-by-step-gap: 16px;
-  --step-by-step-icon-size: 24px;
-
-  .c-step-by-step-timeline {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    padding-left: var(--step-by-step-padding-left);
-
-    .c-step-by-step {
-      display: flex;
-      flex-direction: column;
-      gap: var(--step-by-step-gap);
-    }
-
-    // Vertical timeline line - spans only between first and last markers
-    .c-step-by-step-timeline__line {
-      position: absolute;
-      left: var(--step-by-step-line-left);
-      width: var(--step-by-step-line-width);
-      background-color: var(--step-by-step-line-color);
-      z-index: 0;
-
-      top: 0;
-      height: 0;
-    }
-
-    .c-step-by-step-timeline__content {
-      position: relative;
-      flex: 1;
-      z-index: 1;
-    }
-
-    // Single step: hide dots and line, remove left padding
-    &--single {
-      padding-left: 0;
-
-      .c-step-by-step-timeline__line {
-        display: none;
-      }
-
-      .c-step-by-step-timeline__section::before {
-        display: none;
-      }
-    }
-
-    // Timeline markers as :before pseudo-elements on accordion sections
-    .c-step-by-step-timeline__section {
-      position: relative;
-      border: 1px solid var(--step-by-step-border-color);
-      cursor: pointer;
-
-      // Hover overlay - always present, fades in on hover (same as quick-links)
-      &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background-color: var(--step-by-step-hover-color);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity var(--transition-duration-medium, 0.3s) ease;
-      }
-
-      &:hover::after {
-        opacity: 1;
-      }
-
-      // Override styleguide c-accordion__button hover - section ::after overlay handles it
-      .c-accordion__button:hover {
-        background-color: transparent;
-      }
-
-      // Accordion content with pure CSS height animation using CSS Grid
-      .c-accordion__content {
-        display: grid;
-        grid-template-rows: 0fr;
-        transition:
-          grid-template-rows var(--transition-duration-medium, 0.3s) ease,
-          padding 0s ease 0.1s;
-        padding: 0;
-
-        > * {
-          overflow: hidden;
-        }
-
-        &[aria-hidden="false"] {
-          grid-template-rows: 1fr;
-          padding: var(--step-by-step-content-padding);
-          transition:
-            grid-template-rows var(--transition-duration-medium, 0.3s) ease,
-            padding 0s;
-        }
-      }
-
-      &::before {
-        content: "";
-        position: absolute;
-        left: calc(-1 * var(--step-by-step-padding-left));
-        top: var(--step-by-step-marker-top);
-        width: var(--step-by-step-marker-size);
-        height: var(--step-by-step-marker-size);
-        border-radius: 50%;
-        background-color: var(--step-by-step-marker-hollow);
-        border: 2px solid var(--step-by-step-line-color);
-        z-index: 2;
-        transition: background-color var(--transition-duration-medium, 0.3s)
-          ease;
-      }
-
-      // Open state - make marker filled
-      &.c-step-by-step-timeline__section--open::before,
-      &:has(.c-accordion__button[aria-expanded="true"])::before {
-        background-color: var(--step-by-step-marker-filled);
-        border-color: var(--step-by-step-marker-filled);
-      }
-
-      // Closed state - make marker hollow
-      &:not(.c-step-by-step-timeline__section--open)::before,
-      &:not(:has(.c-accordion__button[aria-expanded="true"]))::before {
-        background-color: var(--step-by-step-marker-hollow);
-        border-color: var(--step-by-step-line-color);
-      }
-
-      // Icon spin animation - same as styleguide accordion & menu (rotate 180deg, ease .3s)
-      .c-accordion__button-wrapper {
+    .c-step-by-step-timeline {
+        --step-rail: 1rem;
+        --step-marker: 12px;
         position: relative;
-      }
+        padding-left: calc(var(--step-rail) * 2);
 
-      .c-accordion__icon--add,
-      .c-accordion__icon--remove {
-        transition:
-          ease 0.3s transform,
-          ease 0.3s opacity;
-      }
-
-      .c-accordion__icon--add {
-        opacity: 1;
-        transform: rotate(0deg);
-        width: var(--step-by-step-icon-size);
-        height: var(--step-by-step-icon-size);
-        font-size: var(--step-by-step-icon-size);
-      }
-
-      .c-accordion__icon--remove {
-        opacity: 0;
-        transform: translateY(-50%) rotate(-180deg);
-        position: absolute;
-        right: calc(
-          var(--base, 8px) * 2
-        ); // Match button-wrapper padding so it overlays the add icon
-        top: 50%;
-        width: var(--step-by-step-icon-size);
-        height: var(--step-by-step-icon-size);
-        font-size: var(--step-by-step-icon-size);
-        &::before {
-          transform: rotate(0deg);
-        }
-      }
-
-      &.c-step-by-step-timeline__section--open {
-        .c-accordion__icon--add {
-          opacity: 0;
-          transform: rotate(180deg);
+        .c-step-by-step-timeline__line {
+            position: absolute;
+            left: calc(var(--step-rail) - 1px);
+            width: 2px;
+            background-color: var(--color--black, #000);
+            z-index: 0;
+            top: 0;
+            height: 0;
         }
 
-        .c-accordion__icon--remove {
-          opacity: 1;
-          transform: translateY(-50%) rotate(0deg);
+        .c-step-by-step-timeline__content {
+            position: relative;
+            z-index: 1;
         }
-      }
+
+        &--single {
+            padding-left: 0;
+
+            .c-step-by-step-timeline__line {
+                display: none;
+            }
+
+            .c-step-by-step-timeline__section summary::before {
+                display: none;
+            }
+        }
     }
-  }
+
+    .c-accordion {
+        --c-accordion--border-radius: 0;
+        --c-accordion--shadow-amount: 0;
+        --c-accordion--color--surface: var(--color--white, #fff);
+        --c-accordion--color--surface-alt: var(--color--white, #fff);
+        --c-accordion--color--surface-contrast: var(--color--black, #1a1a1a);
+        --c-accordion--color--surface-border: var(
+            --color-stain-light-2,
+            var(--color--surface-border, #d0d0d0)
+        );
+        --c-accordion--border-width: 0.125;
+        --c-accordion--outline-width-value: 0.125;
+        gap: calc(var(--base, 0.5rem) * 2);
+        corner-shape: square;
+        contain: none;
+        overflow: visible;
+
+        > .c-accordion__item {
+            corner-shape: square;
+        }
+    }
+
+    .c-step-by-step-timeline__section {
+        contain: none;
+        overflow: visible;
+
+        &:hover {
+            --c-accordion--color--surface: color-mix(
+                in srgb,
+                var(--color--black, #000) 2%,
+                var(--color--white, #fff)
+            );
+            --c-accordion--color--surface-border: color-mix(
+                in srgb,
+                var(--color--black, #000) 30%,
+                var(--color--surface-border, #d0d0d0)
+            );
+        }
+
+        summary {
+            overflow: visible;
+
+            &::before {
+                content: "";
+                position: absolute;
+                left: calc(
+                    (var(--step-rail) + (var(--step-marker) / 2) + var(--c-accordion--outline-width-value, 0.125) * var(--base, 0.5rem)) * -1
+                );
+                top: 50%;
+                width: var(--step-marker);
+                height: var(--step-marker);
+                box-sizing: border-box;
+                border-radius: 50%;
+                background-color: var(--color--white, #fff);
+                border: 2px solid var(--color--black, #000);
+                transform: translateY(-50%);
+                z-index: 2;
+            }
+        }
+
+        &[open] summary::before {
+            background-color: var(--color--black, #000);
+        }
+
+        .c-accordion__item__heading-item {
+            --inherit-font-size: var(--font-size-base, 1rem);
+            --inherit-font-weight: 700;
+            font-weight: 700;
+        }
+
+        .c-accordion__item__icon {
+            transform: translateY(-50%);
+            font-family: inherit;
+
+            &::after {
+                content: "+";
+                font-family: inherit;
+                font-weight: 400;
+                font-feature-settings: normal;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        &[open] .c-accordion__item__icon {
+            transform: translateY(-50%);
+
+            &::after {
+                content: "\2212";
+            }
+        }
+
+        .c-accordion__item__content :is(h1, h2, h3, h4, h5, h6) {
+            text-decoration: none;
+        }
+    }
 }

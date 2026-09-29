@@ -45,43 +45,35 @@ class StepByStep extends \Modularity\Module
         // Field name matches what we defined in ACF: 'timeline_steps'
         $steps = get_field('timeline_steps', $this->ID);
         
-        // Format steps for Accordion component (matches accordion.json structure)
+        $moduleKey = ($this->ID !== null && $this->ID !== '' && $this->ID !== 0)
+            ? (string) $this->ID
+            : uniqid('sbs-', true);
+        $groupName = 'step-by-step-' . $moduleKey;
+
         $data['list'] = array();
         if (!empty($steps) && is_array($steps)) {
             foreach ($steps as $index => $step) {
                 $stepTitle = isset($step['step_title']) ? $step['step_title'] : '';
                 $stepContent = isset($step['step_content']) ? $step['step_content'] : '';
                 $openByDefault = isset($step['open_by_default']) ? (bool) $step['open_by_default'] : false;
-                
-                // Format as Accordion component expects
+
+                $attributeList = array(
+                    'name' => $groupName,
+                );
+
+                if ($openByDefault) {
+                    $attributeList['open'] = '';
+                }
+
                 $data['list'][] = array(
                     'heading' => $stepTitle,
                     'content' => $stepContent,
-                    'open_by_default' => $openByDefault,
+                    'attributeList' => $attributeList,
                     'index' => $index,
-                    'step_number' => $index + 1,
                 );
             }
         }
 
-        // Accordion component configuration – unique ID per instance
-        // Modularity: $this->ID is the post ID. Gutenberg: use Modularity/Block/Data filter for block id.
-        $data['id'] = 'mod-step-by-step-' . ($this->ID ?: wp_unique_id('mod-'));
-        $data['componentElement'] = 'div';
-        $data['sectionElement'] = 'div';
-        $data['sectionHeadingElement'] = 'button';
-        $data['sectionContentElement'] = 'div';
-        $data['beforeHeading'] = '';
-        $data['afterHeading'] = '';
-        $data['beforeContent'] = '<p>';
-        $data['afterContent'] = '</p>';
-        $data['baseClass'] = 'c-accordion';
-        
-        // Add timeline-specific classes
-        $data['class'] = 'c-accordion c-accordion--timeline c-step-by-step';
-        $data['attribute'] = 'data-module-id="' . esc_attr($data['id']) . '"';
-        
-        // Add helper data
         $data['total_steps'] = count($data['list']);
         $data['has_steps'] = !empty($data['list']);
 
